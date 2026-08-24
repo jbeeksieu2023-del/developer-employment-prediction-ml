@@ -1,279 +1,173 @@
-# Which Features Are Most Predictive of Employment Outcomes: Experience, Skills or Education?
+# Employment-Status Prediction from Developer Skills
 
-This project investigates which feature groups are most predictive of employment outcomes using the Stack Overflow Developer Survey dataset. The project compares traditional background information such as education and experience against multiple technical skill representations, including sparse and semantic embedding-based features.
+A team machine-learning project comparing how education, coding experience and
+technical-skill representations predict respondents' employment status in the
+2024 Stack Overflow Developer Survey.
 
----
+> **Project attribution:** This repository is a portfolio fork of the
+> [original Group 5 university project](https://github.com/mchikovaniieu2024-create/ML-fundamentals-2026-Final-Project-Group5).
+> It is presented as collaborative work, with individual ownership documented
+> below.
 
-# Project Deliverables
+## Deliverables
 
-- [Final Report](reports/Group_5_Report.pdf)
-- [Presentation Slides](slides/Group_5_Which_Features_Are_Most_Predictive_of_Hiring_Outcomes_.pdf)
+- [Final report](reports/final_report.pdf)
+- [Presentation](slides/final_presentation.pdf)
+- [Reported model results](results/reported_model_results.csv)
 
----
+## Research question
 
-# Team Members
+Which feature group is most predictive of employment status within this
+developer-survey dataset: education, coding experience or technical skills?
 
-* Jade Beeks
-* Avisa Ansari
-* Marie Chikovani
-* Massimo Vitale
-* Faris Selimovic
-* Maya Tamimi
+The target is `Employed`, where `1` represents an employed respondent and `0`
+represents a non-employed respondent. The project predicts **employment
+status**, not an employer's hiring decision, and its findings should not be
+interpreted causally.
 
----
+## Dataset and leakage controls
 
-# Dataset
+- 73,462 observations and 15 original columns
+- 39,392 employed respondents (53.6%) and 34,070 non-employed respondents
+  (46.4%)
+- Stratified 70%/15%/15% train, validation and test split
+- Preprocessing fitted on training data only
+- `Employment` removed because it directly encodes the target
+- `PreviousSalary` removed because it is a strong employment proxy
+- 63 missing `HaveWorkedWith` entries replaced with empty skill lists
 
-Dataset used:
+## Feature engineering and modelling
 
-* Stack Overflow Developer Survey Dataset
+The project compares five experimental configurations:
 
-Target variable:
+1. **Baseline:** education, demographics and coding experience
+2. **Education:** ordinal and one-hot encoded background variables
+3. **Experience:** standardised years coding and years coding professionally
+4. **Skills:** four representations of semicolon-separated technology lists
+   - total skill count
+   - grouped technology domains
+   - sparse binary skill indicators
+   - semantic embeddings from `all-MiniLM-L6-v2`
+5. **Combined:** education, experience and semantic skill embeddings
 
-* `Employed`
+Models include a zero-rule benchmark, logistic regression, random forest and
+gradient boosting. Evaluation uses accuracy, precision, recall, F1 and ROC-AUC.
 
-  * 1 = employed
-  * 0 = not employed
+## Selected results
 
-Dataset size before cleaning:
+| Experiment | Model | Test F1 | Test ROC-AUC |
+|---|---|---:|---:|
+| Combined | Logistic regression | 0.955 | **0.992** |
+| Skills embeddings | Logistic regression | 0.951 | **0.990** |
+| Skills grouped | Logistic regression | 0.846 | 0.921 |
+| Skills count | Logistic regression | 0.788 | 0.872 |
+| Education | Logistic regression | 0.689 | 0.569 |
+| Experience | Logistic regression | 0.698 | 0.491 |
 
-* 73,462 rows × 15 columns
+The central result was that feature representation mattered more than model
+complexity: semantic representations of technical skills carried substantially
+more predictive signal than education or years of coding alone.
 
-Dataset size after cleaning:
+### Why the perfect binary-skills score is not the headline result
 
-* 73,462 rows × 12 columns
+The sparse binary-skills logistic-regression model returned a test ROC-AUC of
+1.000. The team treated this as suspicious rather than as proof of a perfect
+real-world model. A shuffled-label diagnostic returned chance-level
+performance, which reduced the likelihood of direct pipeline leakage, but the
+result may still reflect dataset-specific separability or memorisation.
 
----
+For that reason, the project uses the semantic-embedding model as the more
+defensible portfolio result and explicitly notes that external validation is
+required.
 
-# Repository Structure
+## My contribution — Jade Beeks
+
+My work focused on the technical-skills modelling stream:
+
+- Implemented the skill parsing, normalisation and train-only vocabulary logic
+- Engineered count, grouped, sparse binary and sentence-embedding skill
+  representations
+- Implemented the logistic-regression and random-forest skills experiments
+
+The original Git history and final report preserve the team's individual
+contributions.
+
+## Team and module ownership
+
+| Team member | Primary contribution |
+|---|---|
+| Massimo Vitale | Data preprocessing, cleaning pipelines and configuration |
+| Avisa Ansari | Baseline and education-only models |
+| Jade Beeks | Skills feature engineering and skills models |
+| Marie Chikovani | Experience-only and combined models |
+| Maya Tamimi | Evaluation metrics and plots |
+| Faris Selimovic | Main integration script |
+
+## Repository structure
 
 ```text
 .
-├── data/
-│   ├── raw/
-│   │   └── stackoverflow_full.csv
-│   └── processed/
-├── report/
-├── slides/
+├── data/raw/                  # source dataset
+├── reports/final_report.pdf
+├── results/                   # preserved final reported metrics
+├── slides/final_presentation.pdf
 ├── src/
-    ├── results
-│   ├── __init__.py
 │   ├── baseline.py
 │   ├── combined.py
 │   ├── config.py
 │   ├── data_utils.py
 │   ├── education.py
-│   ├── evaluate_skills.py
 │   ├── evaluation.py
 │   ├── experience.py
 │   ├── feature_engineering.py
 │   ├── process_skills.py
-│   └── skills.py
+│   ├── skills.py
+│   └── results/               # regenerated plots and tables
+├── tests/
 ├── main.py
-├── requirements.txt
-├── LICENSE
-└── README.md
+└── requirements.txt
 ```
 
----
+## Reproduce the project
 
-# Reproducibility and Design
-
-The project was implemented using modular stand-alone Python scripts and reusable preprocessing pipelines to improve reproducibility and avoid notebook execution-order issues.
-
-Running `main.py` executes the full pipeline:
-
-* baseline experiment
-* education experiment
-* experience experiment
-* skills experiment
-* combined experiment
-* generated visualizations in the results folder
-
----
-
-# Quick Start
-
-## 1. Create a Virtual Environment
+Python 3.11 is recommended.
 
 ```bash
 python3.11 -m venv .venv
-```
-
-## 2. Activate the Environment
-
-### macOS / Linux
-
-```bash
 source .venv/bin/activate
-```
-
-### Windows
-
-```bash
-.venv\Scripts\activate
-```
-
-## 3. Install Dependencies
-
-```bash
+python -m pip install --upgrade pip
 pip install -r requirements.txt
-```
-
-If `requirements.txt` is empty or incomplete, install the main packages manually:
-
-```bash
-pip install pandas numpy scikit-learn scipy matplotlib seaborn sentence-transformers torch
-```
-
----
-
-# Running the Full ML Pipeline
-
-Run all commands from the repository root directory.
-
-## Full pipeline
-
-```bash
 python main.py
 ```
 
-This will:
+On Windows, activate the environment with `.venv\Scripts\activate`.
+The first embedding run downloads the `all-MiniLM-L6-v2` model and therefore
+requires an internet connection. Generated tables and plots are written to
+`src/results/`.
 
-* load the dataset
-* clean the data
-* split into train/validation/test sets
-* train the models
-* evaluate the models
-* generate plots and comparison tables
-* run diagnostics for the skills experiments
+## Run the tests
 
----
+```bash
+pip install -r requirements-dev.txt
+pytest
+```
 
-# Pipeline Overview
+The test suite checks data cleaning, leakage-column removal, split isolation,
+skill parsing, train-only vocabulary behaviour and feature-transformer output.
 
-The machine learning pipeline follows these stages:
+## Limitations and responsible use
 
-1. Load raw Stack Overflow survey data
-2. Remove leakage-prone columns
-3. Handle missing values
-4. Split into train/validation/test sets
-5. Fit preprocessing on training data only
-6. Generate feature representations:
+- Metrics come from one fixed split rather than repeated cross-validation.
+- Hyperparameters were selected manually rather than through systematic search.
+- There is no external or temporal validation dataset.
+- Embeddings improve prediction but reduce interpretability.
+- Demographic variables can encode structural bias; the model should not be
+  used to make real hiring decisions without subgroup fairness analysis.
+- Results describe associations within this survey sample and do not establish
+  that a particular skill, degree or amount of experience causes employment.
 
-   * education
-   * experience
-   * counts skills
-   * grouped skills
-   * embeddings skills
-   * binary skills
-7. Train machine learning models
-8. Evaluate performance through metrics
-9. Evaluation performance through visualizations
+## License
 
-
----
-
-# Feature Representations
-
-## Baseline Feature Set
-
-The baseline model used simple structured respondent information before introducing richer skill representations.
-
-### Included Features
-
-#### Education Features
-- `EdLevel` (ordinal encoded)
-- categorical background variables
-  - one-hot encoded
-
-#### Experience Features
-- `YearsCode`
-- `YearsCodePro`
-  - standardized using `StandardScaler`
-
-## Education Features
-
-* ordinal encoding for `EdLevel`
-* one-hot encoding for categorical background variables
-
-## Experience Features
-
-* `YearsCode`
-* `YearsCodePro`
-* standardized using `StandardScaler`
-
-## Skills Representations
-
-### Counts
-
-Counts the number of distinct technical skills.
-
-### Grouped
-
-Maps technologies into broad domains:
-
-* frontend
-* backend
-* databases
-* cloud
-* DevOps
-* programming languages
-* data science
-* mobile
-
-### Embeddings
-
-Uses:
-
-* `SentenceTransformer`
-* model: `all-MiniLM-L6-v2`
-
-Embeddings convert skill profiles into dense semantic vectors that capture similarity relationships between technologies.
-
-### Binary
-
-Creates one binary feature per skill:
-
-* 1 = respondent has the skill
-* 0 = respondent does not have the skill
-
----
-
-# Outputs
-
-Pipeline outputs are saved under:
-
-* `src/results/`
-* `src/processed/`
-
-Expected outputs include:
-
-* trained models
-* evaluation metrics
-* ROC-AUC comparisons
-* figures and plots
-* diagnostic results
-
----
-
-# Key Findings
-
-Main findings:
-
-* education features alone were weak predictors
-* experience-only models performed poorly
-* technical skills carried the strongest predictive signal
-* semantic embeddings provided the strongest balance between performance and likely generalisability
-* binary skill representations achieved near-perfect validation performance and were removed from final combined model selection
-
----
-
-# References
-
-Main libraries used:
-
-* Scikit-learn
-* Pandas
-* NumPy
-* SentenceTransformers
+The project code is available under the MIT License included in this
+repository. The Stack Overflow survey data remains subject to its original
+terms and attribution requirements.

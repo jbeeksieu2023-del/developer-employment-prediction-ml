@@ -1,5 +1,13 @@
-data/
-*.csv
+# Project-generated data and evaluation artefacts
+data/processed/*
+!data/processed/.gitkeep
+src/results/*
+!src/results/README.md
+
+# Local editor and operating-system files
+.DS_Store
+.idea/
+.vscode/
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[codz]
