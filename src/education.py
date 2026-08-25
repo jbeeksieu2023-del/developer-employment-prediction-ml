@@ -75,5 +75,5 @@ def main():
     return run_education_model()
 
 
-if __name__ == "_main_":
+if __name__ == "__main__":
     main()
